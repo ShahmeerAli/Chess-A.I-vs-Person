@@ -40,6 +40,11 @@ class Gamestate():
 
         self.whitetomove=True
         self.trackmovoes=[]
+        self.whitekingLocation=(7,4)
+        self.blackkingLocation=(0,4)
+        self.checkMate=False
+        self.staleMate=False
+
 
 
     def makeMove(self,move):
@@ -47,6 +52,11 @@ class Gamestate():
         self.board[move.endRow][move.endCol]=move.piecemoved
         self.trackmovoes.append(move)
         self.whitetomove=not self.whitetomove #switch turns
+        #update kings location
+        if move.piecemoved=="wK":
+            self.whitekingLocation=(move.endRow,move.endCol)
+        elif move.piecemoved=="bK":
+            self.blackkingLocation=(move.endRow,move.endCol)
 
 
     def undoLastMove(self):
@@ -55,6 +65,11 @@ class Gamestate():
             self.board[move.startRow][move.startCol]=move.piecemoved
             self.board[move.endRow][move.endCol]=move.pieceCaptured
             self.whitetomove=not self.whitetomove
+            # update kings location
+            if move.piecemoved == "wK":
+                self.whitekingLocation = (move.startRow, move.startCol)
+            elif move.piecemoved == "bK":
+                self.blackkingLocation = (move.startRow, move.startCol)
 
 
 
@@ -62,7 +77,52 @@ class Gamestate():
     def getValidMoves(self):
       # generating valid moves when the king is
       # checked
-        return self.possibleMoves()
+      moves=self.possibleMoves()
+
+      for i in range(len(moves)-1,-1,-1):
+          self.makeMove(moves[i])
+          self.whitetomove= not self.whitetomove
+          if self.inCheck():
+              moves.remove(moves[i])
+          self.whitetomove=not self.whitetomove
+          self.undoLastMove()
+      if len(moves) == 0:
+          if self.inCheck():
+              self.checkMate=True
+          else:
+              self.staleMate=True
+      else:
+          self.checkMate=False
+          self.staleMate=False
+
+
+
+
+      return moves
+
+
+
+    def inCheck(self):
+        if self.whitetomove:
+            return self.squareunderAttack(self.whitekingLocation[0],self.whitekingLocation[1])
+        else:
+            return self.squareunderAttack(self.blackkingLocation[0],self.blackkingLocation[1])
+
+
+
+
+    def squareunderAttack(self,r,c):
+        self.whitetomove = not self.whitetomove
+        oppMoves = self.possibleMoves()
+        self.whitetomove = not self.whitetomove
+        for move in oppMoves:
+            if move.endRow == r and move.endCol == c:
+                self.whitetomove= not self.whitetomove
+                return True
+        return False
+
+
+
 
 
 #All Moves Without checks
