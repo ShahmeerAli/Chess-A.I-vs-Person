@@ -27,6 +27,7 @@ def LoadImages():
 
 """
 Main function to handle user input
+
 """
 def main():
     p.init()
@@ -90,6 +91,7 @@ def drawGameState(screen, gamestate):
     drawBoardSquares(screen)
     drawPieces(screen, gamestate.board)
 
+
 def drawBoardSquares(screen):
     colors = [p.Color("white"), p.Color("gray")]
     for r in range(dimensions):
@@ -108,6 +110,6 @@ def drawPieces(screen, board):
 
 
 
-
 if __name__ == "__main__":
+    #calling main
     main()
