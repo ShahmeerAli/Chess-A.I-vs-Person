@@ -59,13 +59,15 @@ def main():
                     playerclicks.append(sqSelcted)
                 if len(playerclicks)==2:
                    move=engine.Moves(playerclicks[0],playerclicks[1],gamestate.board)
+
                    print(move.getChessNotation())
-                   if move in validMoves:
-                     gamestate.makeMove(move)
-                     moveMade=True
-                     sqSelcted=()
-                     playerclicks = []
-                   else:
+                   for i in range(len(validMoves)):
+                     if move ==validMoves[i]:
+                      gamestate.makeMove(validMoves[i])
+                      moveMade=True
+                      sqSelcted=()
+                      playerclicks = []
+                   if not moveMade:
                        playerclicks=[sqSelcted ]
             elif    e.type==p.KEYDOWN:
                 if e.key==p.K_z:

@@ -44,6 +44,7 @@ class Gamestate():
         self.blackkingLocation=(0,4)
         self.checkMate=False
         self.staleMate=False
+        self.enPassanPossible=()
 
 
 
@@ -58,6 +59,20 @@ class Gamestate():
         elif move.piecemoved=="bK":
             self.blackkingLocation=(move.endRow,move.endCol)
 
+        #pawn promotion
+        if move.isPawnPromotion:
+            self.board[move.endRow][move.endCol]=move.piecemoved[0] + 'Q'
+
+       #en passant move
+        if move.IsenPassanPossible:
+            self.board[move.startRow][move.endCol]="_"
+       #update enPassantPossible Variable
+        if move.piecemoved[1] == 'p' and abs(move.startRow - move.endRow) == 2:
+            self.enPassanPossible=((move.startRow+move.endRow)//2,move.endCol)
+        else:
+            self.enPassanPossible = ()
+
+
 
     def undoLastMove(self):
         if len(self.trackmovoes)!=0:
@@ -71,10 +86,18 @@ class Gamestate():
             elif move.piecemoved == "bK":
                 self.blackkingLocation = (move.startRow, move.startCol)
 
-
-
+           #undo enpassant move
+            if move.IsenPassanPossible:
+                self.board[move.endRow][move.endCol]="_"
+                self.board[move.startRow][move.endCol]=move.pieceCaptured
+                self.enPassanPossible=(move.endRow,move.endCol)
+            #undo 2 square pawn advance
+            if move.piecemoved[1] == 'p' and abs(move.startRow - move.endRow) == 2:
+                self.enPassanPossible=()
 
     def getValidMoves(self):
+      tempEnPossible=self.enPassanPossible
+
       # generating valid moves when the king is
       # checked
       moves=self.possibleMoves()
@@ -97,7 +120,7 @@ class Gamestate():
 
 
 
-
+      self.enPassanPossible=tempEnPossible
       return moves
 
 
@@ -117,7 +140,6 @@ class Gamestate():
         self.whitetomove = not self.whitetomove
         for move in oppMoves:
             if move.endRow == r and move.endCol == c:
-                self.whitetomove= not self.whitetomove
                 return True
         return False
 
@@ -146,9 +168,15 @@ class Gamestate():
             if c-1>=0:#left capture
                 if self.board[r-1][c-1][0]=="b":
                     moves.append(Moves((r, c), (r - 1, c-1), self.board))
+                elif (r-1,c-1) == self.enPassanPossible:
+                    moves.append(Moves((r, c), (r - 1, c - 1), self.board,enPassanPossible=True))
             if c+1 <= 7:#right capture
-                if self.board[r-1][c+1]=="b":
+                if self.board[r-1][c+1][0]=="b":
                     moves.append(Moves((r, c), (r - 1, c+1), self.board))
+                elif (r - 1, c + 1) == self.enPassanPossible:
+                    moves.append(Moves((r, c), (r - 1, c + 1), self.board, enPassanPossible=True))
+
+
         else:#black pawn moves
             if self.board[r+1][c]=="_":
                 moves.append(Moves((r,c),(r+1,c),self.board))
@@ -156,8 +184,12 @@ class Gamestate():
                     moves.append(Moves((r,c),(r+2,c),self.board))
             if c - 1 >=0 and self.board[r+1][c-1][0]=="w":
                 moves.append(Moves((r, c),(r+1,c-1),self.board))
+            elif (r + 1, c - 1) == self.enPassanPossible:
+                 moves.append(Moves((r, c), (r + 1, c - 1), self.board, enPassanPossible=True))
             if c+1 <=7 and self.board[r+1][c+1][0] =="w":
                 moves.append(Moves((r, c), (r + 1, c + 1), self.board))
+            elif (r + 1, c + 1) == self.enPassanPossible:
+                moves.append(Moves((r, c), (r + 1, c +1 ), self.board, enPassanPossible=True))
 
 
 
@@ -249,13 +281,27 @@ class Moves():
     colsToFiles={v:k for k,v in filesToCols.items()}
 
 
-    def __init__(self,startSq,endSq,board):
+    def __init__(self,startSq,endSq,board,enPassanPossible = False,pawnPromotion=False,castle=False):
         self.startRow=startSq[0]
         self.startCol=startSq[1]
         self.endRow=endSq[0]
         self.endCol=endSq[1]
         self.piecemoved=board[self.startRow][self.startCol]
         self.pieceCaptured=board[self.endRow][self.endCol]
+        self.isPawnPromotion = False
+        if (self.piecemoved == "wp" and self.endRow ==0) or (self.piecemoved=="bp" and self.endRow==0):
+            self.isPawnPromotion=True
+        #en passant
+        self.IsenPassanPossible = enPassanPossible
+        if len(self.piecemoved) >=2  and self.piecemoved[1] == 'p' and (self.endRow,self.endCol) ==enPassanPossible:
+
+            self.IsenPassanPossible = True
+
+
+
+
+
+
         self.moveID = self.startRow * 1000 + self.startCol *100 + self.endRow * 10 +self.endCol
         print(self.moveID)
 
