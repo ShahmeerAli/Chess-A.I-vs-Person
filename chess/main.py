@@ -43,53 +43,87 @@ def main():
     sqSelcted=()
     playerclicks=[]
 
+    gameFinished=False
 
     while running:
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
             elif e.type==p.MOUSEBUTTONDOWN:
-                location=p.mouse.get_pos()
-                col=location[0]//square_size
-                row=location[1]//square_size
-                if sqSelcted==(row,col):
-                    sqSelcted=()
-                    playerclicks=[]
-                else:
-                    sqSelcted=(row,col)
-                    playerclicks.append(sqSelcted)
-                if len(playerclicks)==2:
-                   move=engine.Moves(playerclicks[0],playerclicks[1],gamestate.board)
-
-                   print(move.getChessNotation())
-                   for i in range(len(validMoves)):
-                     if move ==validMoves[i]:
-                      gamestate.makeMove(validMoves[i])
-                      moveMade=True
+              if not gameFinished:
+                  location=p.mouse.get_pos()
+                  col=location[0]//square_size
+                  row=location[1]//square_size
+                  if sqSelcted==(row,col):
                       sqSelcted=()
-                      playerclicks = []
-                   if not moveMade:
-                       playerclicks=[sqSelcted ]
-            elif    e.type==p.KEYDOWN:
+                      playerclicks=[]
+                  else:
+                      sqSelcted=(row,col)
+                      playerclicks.append(sqSelcted)
+                  if len(playerclicks)==2:
+                     move=engine.Moves(playerclicks[0],playerclicks[1],gamestate.board)
+
+                     print(move.getChessNotation())
+                     for i in range(len(validMoves)):
+                       if move ==validMoves[i]:
+                        gamestate.makeMove(validMoves[i])
+                        moveMade=True
+                        sqSelcted=()
+                        playerclicks = []
+                     if not moveMade:
+                         playerclicks=[sqSelcted ]
+            elif e.type==p.KEYDOWN:
                 if e.key==p.K_z:
                     gamestate.undoLastMove()
                     moveMade=True
+                if e.key==p.K_r:
+                    gamestate=engine.Gamestate()
+                    validMoves=gamestate.getValidMoves()
+                    sqSelcted=()
+                    playerclicks=[]
+                    moveMade=False
+
 
 
         if moveMade:
            validMoves=gamestate.getValidMoves()
            moveMade=False
 
-        drawGameState(screen, gamestate)
+        drawGameState(screen, gamestate,validMoves,sqSelcted)
+        if gamestate.checkMate:
+            gameFinished=True
+            if gamestate.whitetomove:
+                drawText(screen,"Black Wins")
+            else:
+                drawText(screen,"White Wins")
+        elif gamestate.staleMate:
+            gameFinished=True
+            drawText(screen,"Stale Mate")
+
+
         clock.tick(max_fps)
         p.display.flip()
 
 """
 Responsible for all graphics
 """
-def drawGameState(screen, gamestate):
+def drawGameState(screen, gamestate,validMoves,sqSelected):
     drawBoardSquares(screen)
+    highlightsquares(screen,gamestate,validMoves,sqSelected)
     drawPieces(screen, gamestate.board)
+
+
+
+def drawText(screen, text):
+    font = p.font.SysFont("Helvetica", 32, True, False)
+    textObject = font.render(text, True, p.Color("Red"))
+    textLocation = p.Rect(0, 0, width, height).move(
+        width // 2 - textObject.get_width() // 2,
+        height // 2 - textObject.get_height() // 2
+    )
+    screen.blit(textObject, textLocation)
+    
+
 
 
 def drawBoardSquares(screen):
@@ -106,6 +140,26 @@ def drawPieces(screen, board):
            piece=board[row][c]
            if piece!="_":
                screen.blit(Images[piece],p.Rect(c*square_size,row*square_size,square_size,square_size))
+
+
+
+"""
+Highligthing the squares
+"""
+def highlightsquares(screen,gamestate,validMoves,sqSelected):
+    if sqSelected!=():
+        r, c = sqSelected
+        if gamestate.board[r][c][0]==('w' if gamestate.whitetomove else 'b'):
+               surface=p.Surface((square_size, square_size))
+               surface.set_alpha(120)
+               surface.fill('green')
+               screen.blit(surface,(c * square_size, r * square_size))
+               surface.fill('violet')
+               for move in validMoves:
+                   if move.startRow==r and move.startCol == c:
+                       screen.blit(surface,(move.endCol*square_size, move.endRow*square_size))
+
+
 
 
 
