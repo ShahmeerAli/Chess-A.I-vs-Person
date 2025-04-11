@@ -6,6 +6,7 @@ import pygame as p
 # from pygame.examples.go_over_there import screen, clock
 
 from chess import engine
+from chess import MoveFinder
 
 # Global Constants
 width = height = 512
@@ -44,13 +45,16 @@ def main():
     playerclicks=[]
 
     gameFinished=False
-
+    playerOne=True #if made false both players work as AI
+    playerTwo=False
     while running:
+        humanTurn=(gamestate.whitetomove and playerOne) or (not gamestate.whitetomove and playerTwo)
+
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
             elif e.type==p.MOUSEBUTTONDOWN:
-              if not gameFinished:
+              if not gameFinished and humanTurn:
                   location=p.mouse.get_pos()
                   col=location[0]//square_size
                   row=location[1]//square_size
@@ -82,6 +86,13 @@ def main():
                     sqSelcted=()
                     playerclicks=[]
                     moveMade=False
+
+
+        #A.I MOVE FINDER
+        if not gameFinished and not humanTurn:
+            AIMove=MoveFinder.FindRandomMove(validMoves)
+            gamestate.makeMove(AIMove)
+            moveMade=True
 
 
 
@@ -122,7 +133,7 @@ def drawText(screen, text):
         height // 2 - textObject.get_height() // 2
     )
     screen.blit(textObject, textLocation)
-    
+
 
 
 
