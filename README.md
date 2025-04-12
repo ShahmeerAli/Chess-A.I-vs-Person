@@ -1,2 +1,2 @@
-# Chess-A.I-vs-Person
-made in python 
+# Chess-A.I-vs-Person GUI BASED
+made in python  with GUI 
