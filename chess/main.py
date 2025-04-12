@@ -90,7 +90,9 @@ def main():
 
         #A.I MOVE FINDER
         if not gameFinished and not humanTurn:
-            AIMove=MoveFinder.FindRandomMove(validMoves)
+            AIMove=MoveFinder.FindBestMove(gamestate, validMoves)
+            if AIMove is None:
+               AIMove=MoveFinder.FindRandomMove(validMoves)
             gamestate.makeMove(AIMove)
             moveMade=True
 
